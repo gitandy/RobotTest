@@ -13,16 +13,13 @@ int sw_r = 17;
 int bmp_l = 18;
 int bmp_r = 19;
 
+bool go = false;
 int d = RELEASE;
 
 // Setup things
 void setup() {
   pinMode(led, OUTPUT);
-  pinMode(led_rd, OUTPUT);
-  pinMode(led_gn, OUTPUT);
   digitalWrite(led, LOW);
-  digitalWrite(led_rd, HIGH);
-  digitalWrite(led_gn, HIGH);
 
   pinMode(sw_l, INPUT_PULLUP);
   pinMode(sw_r, INPUT_PULLUP);
@@ -36,8 +33,48 @@ void setup() {
   Serial.print("Ready!\n");
 }
 
+// Test if robot should run or stop
+bool checkGo() {
+  // Check buttons
+  pinMode(btn_rd, INPUT);
+  pinMode(btn_gn, INPUT);
+  if(digitalRead(btn_rd) == 0) {
+    pinMode(led_rd, OUTPUT);
+    digitalWrite(led_rd, LOW);
+    go = false;
+  } else if(digitalRead(btn_gn) == 0) {
+    pinMode(led_rd, OUTPUT);
+    digitalWrite(led_rd, HIGH);
+    delay(300);
+    digitalWrite(led_rd, LOW);
+    delay(300);
+    digitalWrite(led_rd, HIGH);
+    delay(300);
+    digitalWrite(led_rd, LOW);
+    delay(300);
+    go = true;
+    d = FORWARD;
+  }
+
+  pinMode(led_rd, OUTPUT);
+  pinMode(led_gn, OUTPUT);
+  digitalWrite(led_gn, HIGH);
+
+  if(go == false) digitalWrite(led_rd, LOW);
+  else digitalWrite(led_rd, HIGH);
+
+  return go;
+}
+
 // Main loop
 void loop() {
+  if(!checkGo()){
+    m_left.run(RELEASE);
+    m_right.run(RELEASE);
+    delay(100);
+    return;
+  }
+
   // Robot on floor?
   if (!digitalRead(sw_l) || !digitalRead(sw_r)) {
     m_left.run(RELEASE);
@@ -89,5 +126,5 @@ void loop() {
       Serial.read();
   }
 
-  delay(100);
+  delay(10);
 }

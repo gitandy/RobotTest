@@ -1,5 +1,9 @@
 #include <AFMotor.h>
 
+#define LN_SENS A1
+#define LN_LINE 700
+#define LN_STEP 900
+
 AF_DCMotor m_left(3, MOTOR34_64KHZ);
 AF_DCMotor m_right(4, MOTOR34_64KHZ);
 
@@ -15,6 +19,8 @@ int bmp_r = 19;
 
 bool go = false;
 int d = RELEASE;
+bool ln_detected = false;
+unsigned long start = 0;
 
 // Setup things
 void setup() {
@@ -25,6 +31,7 @@ void setup() {
   pinMode(sw_r, INPUT_PULLUP);
   pinMode(bmp_l, INPUT);
   pinMode(bmp_r, INPUT);
+  pinMode(LN_SENS, INPUT);
 
   m_left.setSpeed(255);
   m_right.setSpeed(255);
@@ -42,6 +49,7 @@ bool checkGo() {
     pinMode(led_rd, OUTPUT);
     digitalWrite(led_rd, LOW);
     go = false;
+    ln_detected = false;
   } else if(digitalRead(btn_gn) == 0) {
     pinMode(led_rd, OUTPUT);
     digitalWrite(led_rd, HIGH);
@@ -54,6 +62,7 @@ bool checkGo() {
     delay(300);
     go = true;
     d = FORWARD;
+    start = millis();
   }
 
   pinMode(led_rd, OUTPUT);
@@ -86,6 +95,20 @@ void loop() {
     digitalWrite(led_gn, LOW);
   }
 
+  // Found line?
+  if(analogRead(LN_SENS) > LN_LINE && (millis() - start) > 1000) {
+    ln_detected = true;
+    Serial.println("Line detected!");
+    delay(200);
+  }
+
+  // Follow line
+  if(ln_detected && analogRead(LN_SENS) < LN_LINE) {
+    m_left.run(RELEASE);
+    delay(10);
+    m_left.run(FORWARD);
+  }
+
   // Bumper touched the wall?
   if (!digitalRead(bmp_l) || !digitalRead(bmp_r)) {
     m_left.run(RELEASE);
@@ -99,6 +122,7 @@ void loop() {
     
     delay(1000);
     d = RELEASE;
+    go = false;
   } else {
     digitalWrite(led_rd, HIGH);
   }

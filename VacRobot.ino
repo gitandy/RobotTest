@@ -1,7 +1,7 @@
 #include <AFMotor.h>
 
 #define LN_SENS A1
-#define LN_LINE 700
+#define LN_LINE 600
 #define LN_STEP 900
 #define LED 13
 #define LED_RD 9
@@ -97,7 +97,7 @@ void loop() {
   }
 
   // Found line?
-  if(analogRead(LN_SENS) > LN_LINE && (millis() - start) > 1000) {
+  if(analogRead(LN_SENS) > LN_LINE && (millis() - start) > 1000 && !ln_detected) {
     ln_detected = true;
     Serial.println("Line detected!");
     delay(200);
@@ -108,6 +108,10 @@ void loop() {
     m_left.run(RELEASE);
     delay(10);
     m_left.run(FORWARD);
+  } else if(ln_detected && analogRead(LN_SENS) > LN_LINE) {
+    m_right.run(RELEASE);
+    delay(10);
+    m_right.run(FORWARD);
   }
 
   // Bumper touched the wall?
@@ -151,5 +155,5 @@ void loop() {
       Serial.read();
   }
 
-  delay(10);
+  delay(5);
 }

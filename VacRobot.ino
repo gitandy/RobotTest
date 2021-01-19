@@ -3,19 +3,18 @@
 #define LN_SENS A1
 #define LN_LINE 700
 #define LN_STEP 900
+#define LED 13
+#define LED_RD 9
+#define LED_GN 10
+#define BTN_RD 9
+#define BTN_GN 10
+#define SW_L 16
+#define SW_R 17
+#define BMP_L 18
+#define BMP_R 19
 
 AF_DCMotor m_left(3, MOTOR34_64KHZ);
 AF_DCMotor m_right(4, MOTOR34_64KHZ);
-
-int led = 13;
-int led_rd = 9;
-int led_gn = 10;
-int btn_rd = 9;
-int btn_gn = 10;
-int sw_l = 16;
-int sw_r = 17;
-int bmp_l = 18;
-int bmp_r = 19;
 
 bool go = false;
 int d = RELEASE;
@@ -24,15 +23,17 @@ unsigned long start = 0;
 
 // Setup things
 void setup() {
-  pinMode(led, OUTPUT);
-  digitalWrite(led, LOW);
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW);
 
-  pinMode(sw_l, INPUT_PULLUP);
-  pinMode(sw_r, INPUT_PULLUP);
-  pinMode(bmp_l, INPUT);
-  pinMode(bmp_r, INPUT);
+  pinMode(SW_L, INPUT_PULLUP);
+  pinMode(SW_R, INPUT_PULLUP);
+  pinMode(BMP_L, INPUT);
+  pinMode(BMP_R, INPUT);
   pinMode(LN_SENS, INPUT);
 
+  // Set speed to max. cause currently PWM 
+  // does not work with the motors
   m_left.setSpeed(255);
   m_right.setSpeed(255);
 
@@ -43,34 +44,34 @@ void setup() {
 // Test if robot should run or stop
 bool checkGo() {
   // Check buttons
-  pinMode(btn_rd, INPUT);
-  pinMode(btn_gn, INPUT);
-  if(digitalRead(btn_rd) == 0) {
-    pinMode(led_rd, OUTPUT);
-    digitalWrite(led_rd, LOW);
+  pinMode(BTN_RD, INPUT);
+  pinMode(BTN_GN, INPUT);
+  if(digitalRead(BTN_RD) == 0) {
+    pinMode(LED_RD, OUTPUT);
+    digitalWrite(LED_RD, LOW);
     go = false;
     ln_detected = false;
-  } else if(digitalRead(btn_gn) == 0) {
-    pinMode(led_rd, OUTPUT);
-    digitalWrite(led_rd, HIGH);
+  } else if(digitalRead(BTN_GN) == 0) {
+    pinMode(LED_RD, OUTPUT);
+    digitalWrite(LED_RD, HIGH);
     delay(300);
-    digitalWrite(led_rd, LOW);
+    digitalWrite(LED_RD, LOW);
     delay(300);
-    digitalWrite(led_rd, HIGH);
+    digitalWrite(LED_RD, HIGH);
     delay(300);
-    digitalWrite(led_rd, LOW);
+    digitalWrite(LED_RD, LOW);
     delay(300);
     go = true;
     d = FORWARD;
     start = millis();
   }
 
-  pinMode(led_rd, OUTPUT);
-  pinMode(led_gn, OUTPUT);
-  digitalWrite(led_gn, HIGH);
+  pinMode(LED_RD, OUTPUT);
+  pinMode(LED_GN, OUTPUT);
+  digitalWrite(LED_GN, HIGH);
 
-  if(go == false) digitalWrite(led_rd, LOW);
-  else digitalWrite(led_rd, HIGH);
+  if(go == false) digitalWrite(LED_RD, LOW);
+  else digitalWrite(LED_RD, HIGH);
 
   return go;
 }
@@ -85,14 +86,14 @@ void loop() {
   }
 
   // Robot on floor?
-  if (!digitalRead(sw_l) || !digitalRead(sw_r)) {
+  if (!digitalRead(SW_L) || !digitalRead(SW_R)) {
     m_left.run(RELEASE);
     m_right.run(RELEASE);
-    digitalWrite(led_gn, HIGH);
+    digitalWrite(LED_GN, HIGH);
   } else {
     m_left.run(d);
     m_right.run(d);
-    digitalWrite(led_gn, LOW);
+    digitalWrite(LED_GN, LOW);
   }
 
   // Found line?
@@ -110,10 +111,10 @@ void loop() {
   }
 
   // Bumper touched the wall?
-  if (!digitalRead(bmp_l) || !digitalRead(bmp_r)) {
+  if (!digitalRead(BMP_L) || !digitalRead(BMP_R)) {
     m_left.run(RELEASE);
     m_right.run(RELEASE);
-    digitalWrite(led_rd, LOW);
+    digitalWrite(LED_RD, LOW);
     delay(200);
 
     d = BACKWARD;
@@ -124,7 +125,7 @@ void loop() {
     d = RELEASE;
     go = false;
   } else {
-    digitalWrite(led_rd, HIGH);
+    digitalWrite(LED_RD, HIGH);
   }
 
   if (Serial.available() > 0) {
@@ -140,7 +141,7 @@ void loop() {
     else if (dt == 's')
       d = RELEASE;
 
-    if (digitalRead(sw_l) && digitalRead(sw_r)) {
+    if (digitalRead(SW_L) && digitalRead(SW_R)) {
       m_left.run(d);
       m_right.run(d);
     }
